@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Informatika SMK Kelas 10</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f3f4f6; --text: #1f2937; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: var(--primary); }
+        
+        .question-card { margin-bottom: 25px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; margin-bottom: 10px; }
+        .badge-complex { background: #dbeafe; color: #1e40af; } /* Biru untuk Kompleks */
+        .badge-hots { background: #fce7f3; color: #9d174d; } /* Merah muda untuk HOTS */
+        
+        .question-text { font-size: 1.1em; font-weight: 600; margin-bottom: 15px; }
+        .options { display: grid; gap: 10px; }
+        .option-label { display: flex; align-items: center; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .option-label:hover { border-color: var(--primary); background: #f8fafc; }
+        .option-label input { margin-right: 15px; transform: scale(1.2); }
+        
+        .btn { display: block; width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 30px; }
+        .btn:hover { background: #1d4ed8; }
+        
+        .result-box { display: none; text-align: center; }
+        .score { font-size: 4em; font-weight: bold; color: var(--primary); }
+        .feedback { margin-top: 20px; text-align: left; }
+        .feedback-item { background: #f8fafc; padding: 10px; margin-bottom: 5px; border-left: 4px solid #ccc; }
+        .feedback-item.correct { border-left-color: #22c55e; }
+        .feedback-item.wrong { border-left-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quizPanel">
+    <h1>Ujian Informatika & Digital</h1>
+    <p style="text-align:center">Materi: Biner, Word, Excel | Kelas 10 SMK</p>
+    <div style="background:#fff3cd; padding:10px; border-radius:5px; font-size:0.9em; text-align:center; margin-bottom:20px;">
+        ⚠️ <strong>Perhatian:</strong><br>
+        Soal bertanda <strong>[KOMPLEKS]</strong> memiliki lebih dari satu jawaban benar.<br>
+        Soal bertanda <strong>[HOTS]</strong> hanya memiliki satu jawaban benar.
+    </div>
+
+    <form id="quizForm">
+        <div id="questionsContainer"></div>
+        <button type="button" class="btn" onclick="submitExam()">Kirim Jawaban</button>
+    </form>
+</div>
+
+<div class="container result-box" id="resultPanel">
+    <h2>Hasil Ujian</h2>
+    <div class="score" id="scoreDisplay">0</div>
+    <p>Skor Akhir Anda</p>
+    <div class="feedback" id="feedbackContainer"></div>
+    <button class="btn" onclick="location.reload()">Ulangi Ujian</button>
+</div>
+
+<script>
+    // --- BANK SOAL (JSON) ---
+    // Format: 
+    // type: 'complex' (Checkbox) atau 'single' (Radio)
+    // q: Pertanyaan
+    // options: Pilihan A-E
+    // key: Indeks jawaban benar (0=A, 1=B, dst). Jika complex, pakai array [0, 2]
+    
+    const questions = [
+        // --- BAGIAN 1: SOAL PILIHAN GANDA KOMPLEKS (Biner, Word, Excel) ---
+        // Jawaban Benar > 1
+        {
+            type: 'complex',
+            q: "Perhatikan bilangan biner **1101**. Pernyataan manakah yang BENAR mengenai bilangan tersebut?",
+            options: [
+                "A. Setara dengan nilai 13 dalam desimal",
+                "B. Setara dengan nilai 11 dalam desimal",
+                "C. Terdiri dari 4 bit data",
+                "D. Digit paling kiri (MSB) bernilai 8 dalam desimal",
+                "E. Jika ditambah 1 biner (1101 + 1), hasilnya adalah 1111"
+            ],
+            key: [0, 2, 3], // A, C, D
+            discussion: "1101 = 8+4+0+1 = 13. Terdiri dari 4 digit (bit). MSB (1xxx) bernilai 2^3 = 8."
+        },
+        {
+            type: 'complex',
+            q: "Fitur **Page Layout** di Microsoft Word memiliki fungsi vital dalam pengaturan dokumen cetak. Mana saja fitur yang terdapat di tab ini?",
+            options: [
+                "A. Margins (Batas tepi kertas)",
+                "B. Orientation (Potrait/Landscape)",
+                "C. Font Style (Gaya Huruf)",
+                "D. Columns (Kolom Koran)",
+                "E. Table of Contents (Daftar Isi)"
+            ],
+            key: [0, 1, 3], // A, B, D
+            discussion: "Margins, Orientation, dan Columns ada di Page Layout. Font Style ada di Home, Table of Contents ada di References."
+        },
+        {
+            type: 'complex',
+            q: "Dalam Excel, penulisan rumus harus mengikuti aturan sintaksis tertentu. Manakah penulisan yang VALID untuk menjumlahkan sel A1 sampai A5?",
+            options: [
+                "A. =SUM(A1:A5)",
+                "B. =A1+A2+A3+A4+A5",
+                "C. =ADD(A1:A5)",
+                "D. =SUM(A1;A5) (Hanya A1 dan A5)",
+                "E. =TOTAL(A1-A5)"
+            ],
+            key: [0, 1, 3], // A, B, D
+            discussion: "=SUM(range) dan penjumlahan manual (+) valid. SUM dengan pemisah titik koma (;) menjumlahkan dua sel terpisah, bukan range."
+        },
+        {
+            type: 'complex',
+            q: "Terkait konversi sistem bilangan, manakah pasangan konversi yang TEPAT?",
+            options: [
+                "A. 1 Byte = 8 Bit",
+                "B. 1010 (Biner) = A (Heksadesimal)",
+                "C. 15 (Desimal) = F (Heksadesimal)",
+                "D. 100 (Biner) = 5 (Desimal)",
+                "E. 11 (Biner) = 3 (Desimal)"
+            ],
+            key: [0, 1, 2, 4], // A, B, C, E
+            discussion: "100 biner adalah 4 desimal, bukan 5. Sisanya benar."
+        },
+        {
+            type: 'complex',
+            q: "Manakah shortcut keyboard di Microsoft Word yang berfungsi untuk **navigasi** atau **penyuntingan** cepat?",
+            options: [
+                "A. Ctrl + Z (Undo)",
+                "B. Ctrl + C (Copy)",
+                "C. Ctrl + Alt + Del (Task Manager)",
+                "D. Ctrl + F (Find)",
+                "E. Ctrl + Home (Ke awal dokumen)"
+            ],
+            key: [0, 1, 3, 4], // A, B, D, E
+            discussion: "Semua opsi adalah shortcut Word kecuali Ctrl+Alt+Del yang merupakan shortcut sistem operasi Windows."
+        },
+
+        // --- BAGIAN 2: SOAL PG HOTS (Analisis & Penerapan) ---
+        // Jawaban Benar = 1
+        {
+            type: 'single',
+            q: "Seorang siswa ingin membuat Laporan PKL di Word. Ia ingin agar 'Bab 1' dan 'Bab 2' ada di halaman baru secara otomatis tanpa menekan Enter berkali-kali. Fitur apa yang paling efisien digunakan?",
+            options: [
+                "A. Page Borders",
+                "B. Page Break (Ctrl + Enter)",
+                "C. Paragraph Spacing",
+                "D. Line Spacing",
+                "E. Text Wrapping"
+            ],
+            key: 1, // B
+            discussion: "Page Break memaksa teks berikutnya pindah ke halaman baru secara rapi tanpa terpengaruh perubahan di halaman sebelumnya."
+        },
+        {
+            type: 'single',
+            q: "Diketahui IP Address komputer adalah 192.168.1.1. Jika angka 192 dikonversi ke dalam biner untuk diproses mesin, berapakah nilainya?",
+            options: [
+                "A. 11000000",
+                "B. 10101010",
+                "C. 11110000",
+                "D. 11001100",
+                "E. 10000001"
+            ],
+            key: 0, // A
+            discussion: "192 = 128 + 64. Bit ke-8 dan ke-7 nyala (11), sisanya 0. Jadi 11000000."
+        },
+        {
+            type: 'single',
+            q: "Anda memiliki tabel nilai siswa di Excel. Kolom A=Nama, B=Nilai. Anda ingin memberi status 'Lulus' jika nilai >= 75 dan 'Remidi' jika di bawahnya. Rumus yang tepat di kolom C adalah...",
+            options: [
+                "A. =IF(B2>75; 'Lulus'; 'Remidi')",
+                "B. =IF(B2>=75; 'Lulus'; 'Remidi')",
+                "C. =SUM(B2>=75; 'Lulus'; 'Remidi')",
+                "D. =IF(B2=75; 'Lulus'; 'Remidi')",
+                "E. =AND(B2>75; 'Lulus')"
+            ],
+            key: 1, // B
+            discussion: "Gunakan operator >= (lebih besar atau sama dengan) untuk menyertakan nilai 75 sebagai batas lulus."
+        },
+        {
+            type: 'single',
+            q: "Saat mencetak dokumen Excel yang sangat lebar, kolom terakhir terpotong di halaman berikutnya. Cara paling cepat agar semua kolom muat dalam satu kertas A4 Landscape tanpa mengecilkan font satu per satu adalah...",
+            options: [
+                "A. Mengganti kertas menjadi A3",
+                "B. Menggunakan fitur 'Fit to One Page' atau 'Scale to Fit' saat Print Preview",
+                "C. Menghapus beberapa kolom data",
+                "D. Mengubah margin menjadi sangat lebar",
+                "E. Mengcopy data ke Word"
+            ],
+            key: 1, // B
+            discussion: "Fitur Scaling (Fit Sheet on One Page) otomatis mengecilkan skala dokumen agar pas dengan lebar kertas."
+        },
+        {
+            type: 'single',
+            q: "Mengapa sistem bilangan biner digunakan sebagai dasar utama komputer modern, bukan desimal?",
+            options: [
+                "A. Karena biner lebih mudah dihitung manusia",
+                "B. Karena komponen elektronik (transistor) hanya memiliki dua kondisi stabil (On/Off atau Tegangan Tinggi/Rendah)",
+                "C. Karena biner memiliki angka 0 sampai 9",
+                "D. Karena biner ditemukan oleh Bill Gates",
+                "E. Karena desimal terlalu kuno"
+            ],
+            key: 1, // B
+            discussion: "Komputer tersusun dari saklar elektronik (transistor) yang secara fisik hanya bisa merepresentasikan dua keadaan: ada arus (1) atau tidak (0)."
+        }
+        
+        // --- NOTE: ANDA BISA MENAMBAHKAN SISA SOAL DI SINI DENGAN COPY-PASTE FORMAT DI ATAS ---
+    ];
+
+    // --- LOGIKA APLIKASI ---
+    
+    function renderQuestions() {
+        const container = document.getElementById('questionsContainer');
+        let html = '';
+        
+        questions.forEach((q, index) => {
+            const badgeClass = q.type === 'complex' ? 'badge-complex' : 'badge-hots';
+            const badgeText = q.type === 'complex' ? 'Pilihan Ganda Kompleks' : 'Pilihan Ganda HOTS';
+            const inputType = q.type === 'complex' ? 'checkbox' : 'radio';
+            
+            html += `
+            <div class="question-card">
+                <span class="badge ${badgeClass}">${badgeText}</span>
+                <div class="question-text">${index + 1}. ${formatText(q.q)}</div>
+                <div class="options">
+            `;
+            
+            q.options.forEach((opt, optIndex) => {
+                html += `
+                <label class="option-label">
+                    <input type="${inputType}" name="q${index}" value="${optIndex}">
+                    <span>${opt}</span>
+                </label>
+                `;
+            });
+            
+            html += `</div></div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function formatText(text) {
+        // Simple markdown formatter (Bold only)
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function submitExam() {
+        let score = 0;
+        let feedbackHtml = '';
+        const totalWeight = questions.length; // Anggap bobot tiap soal sama
+        
+        questions.forEach((q, index) => {
+            const inputs = document.querySelectorAll(`input[name="q${index}"]:checked`);
+            let userAnswers = Array.from(inputs).map(i => parseInt(i.value));
+            
+            let isCorrect = false;
+            let statusClass = 'wrong';
+            let statusIcon = '❌';
+            
+            if (q.type === 'single') {
+                if (userAnswers.length > 0 && userAnswers[0] === q.key) {
+                    isCorrect = true;
+                }
+            } else {
+                // Logika Penilaian Kompleks: Harus tepat semua (Strict)
+                // Opsi: Anda bisa mengubah logika ini untuk poin parsial jika diinginkan
+                userAnswers.sort();
+                q.key.sort();
+                if (JSON.stringify(userAnswers) === JSON.stringify(q.key)) {
+                    isCorrect = true;
+                }
+            }
+            
+            if (isCorrect) {
+                score++;
+                statusClass = 'correct';
+                statusIcon = '✅';
+            }
+            
+            feedbackHtml += `
+            <div class="feedback-item ${statusClass}">
+                <strong>No. ${index + 1} ${statusIcon}</strong><br>
+                ${isCorrect ? 'Jawaban Anda Benar.' : 'Jawaban Kurang Tepat.'}<br>
+                <small><em>Pembahasan: ${q.discussion}</em></small>
+            </div>
+            `;
+        });
+
+        // Hitung Skor (Skala 100)
+        const finalScore = Math.round((score / totalWeight) * 100);
+        
+        document.getElementById('quizPanel').style.display = 'none';
+        document.getElementById('resultPanel').style.display = 'block';
+        document.getElementById('scoreDisplay').innerText = finalScore;
+        document.getElementById('feedbackContainer').innerHTML = feedbackHtml;
+        window.scrollTo(0,0);
+    }
+
+    // Jalankan saat load
+    renderQuestions();
+</script>
+
+</body>
+</html>
